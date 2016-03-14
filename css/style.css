@@ -5,20 +5,58 @@ body {
   background: #cccccc;
 }
 
-div.lightbox {
-  width: 500px;
-  position: absolute;
+.header {
+  font-size: 2em;
+  background: #fff;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #ccc;
+  color: #ccc;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.image-cell-section {
+  margin-top: 100px;
+}
+
+.lightbox, .lightbox-back-button, .lightbox-forward-button {
   z-index: 999;
-  margin: 0 auto 0 auto;
+  position: fixed;
+  top: 10%;
   background: #fff;
   border: 1px solid #333;
 }
+
+.lightbox-back-button, .lightbox-forward-button {
+  font-size: 3em;
+  color: #ccc;
+  padding: 20px;
+  cursor: pointer;
+}
+
+div.lightbox {
+  max-width: 500px;
+  margin: 0 auto 0 auto;
+  text-align: center;
+}
+
+.lightbox-close {
+  padding: 5px;
+  cursor: pointer;
+  text-align: right;
+}
+
+
 
 div.shadowbox {
   background: #000;
   opacity: 0.8;
   top: 0;
-  position: absolute;
+  cursor: pointer;
+  position: fixed;
   z-index: 998;
   margin: 0;
   width: 100%;
@@ -29,40 +67,21 @@ input[type=button] {
   cursor: pointer;
 }
 
-div.test, div.stats {
-  border: 1px solid #333;
-  margin: 3px 30px 3px 30px;
-  padding: 6px;
+.image-title {
+  border-top: 1px solid #333;
+  padding-top: 20px;
 }
 
-div.stats {
+.image-cell {
+  padding: 10px;
+  margin: 10px;
+  background: #fff;
+  max-width: 200px;
+  float: left;
   text-align: center;
-  padding-bottom: 30px;
 }
 
-div.stats span {
-  margin: 5px;
-  padding: 5px;
-}
-
-div.test p {
-  display: inline;
-  margin-left: 6px;
-}
-
-div.test-running, .tests-running {
-  background: #f6ea8c;
-}
-
-div.test-passed, .tests-passed {
-  background: #99f19e;
-}
-
-div.test-failed, .tests-failed {
-  background: #c03546;
-  color: #fff;
-}
-
-div.test input[type=button].hidden {
-  display: none;
+.image-cell img {
+  cursor: pointer;
+  width: 100px;
 }
