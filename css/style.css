@@ -18,6 +18,14 @@ body {
   width: 100%;
 }
 
+.header-plus {
+  cursor: pointer;
+  width: 100px;
+  float: right;
+  text-align: center;
+  color: red;
+}
+
 .image-cell-section {
   margin-top: 100px;
 }
@@ -32,9 +40,10 @@ body {
 
 .lightbox-back-button, .lightbox-forward-button {
   font-size: 3em;
-  color: #ccc;
+  color: #fff;
   padding: 20px;
   cursor: pointer;
+  background: rgba(0,0,0,0.1);
 }
 
 div.lightbox {

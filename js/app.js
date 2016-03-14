@@ -66,7 +66,7 @@
     }
   };
   //
-  var app = {images:[], v: {}};
+  var app = {images:[], v: {}, t: {}};
 
   app.getBase64Images = function (n) {
     var url = 'http://104.131.154.14:3000/want';
@@ -85,15 +85,19 @@
     var id = uuid();
     var title = fakeTitle();
     app.images.push({base64Image: base64Image, id: id, title: title});
-    var image = app.v.image(base64Image);
+    var image = app.t.image(base64Image);
     image.addEventListener('click', function (el) {
-      app.v.lightbox(app.v.image(base64Image, id), title);
+      app.v.lightbox(app.t.image(base64Image, id), title);
     });
 
     app.render(
       document.getElementsByClassName('image-cell-section')[0],
-      app.v.imageCell(image, title)
+      app.t.imageCell(image, title)
     );
+  };
+
+  app.render = function (target, node) {
+    target.appendChild(node);
   };
 
   app.init = function () { 
@@ -101,85 +105,67 @@
     app.getBase64Images();
   };
 
-  app.render = function (target, node) {
-    target.appendChild(node);
+  app.v.layout = function () {
+    app.render(document.body, app.t.header());
+    app.render(document.body, app.t.imageCellSection());
   };
 
-  app.v.imageCell = function (imageNode, imageTitle) {
-    var cell = el('div');
-    cell.classList.add('image-cell');
+  app.t.imageCell = function (imageNode, imageTitle) {
+    var cell = el('div', 'image-cell');
     cell.appendChild(imageNode);
 
-    var title = el('p');
-    title.classList.add('image-title');
+    var title = el('p', 'image-title');
     title.textContent = imageTitle || 'Lightbox Demo Title';
     cell.appendChild(title);
     return cell;
   };
 
-  app.v.header = function () {
-    var h = el('div');
-    h.classList.add('header');
+  app.t.header = function () {
+    var h = el('div', 'header');
     h.textContent = 'Lightbox Demo';
+    var plus = el('span', 'header-plus');
+    plus.textContent = '+';
+    plus.addEventListener('click', function () {
+      app.getBase64Images();
+    });
+    h.appendChild(plus);
     return h;
   };
 
-  app.v.imageCellSection = function () {
-    var section = el('div');
-    section.classList.add('image-cell-section');
-    return section;
+  app.t.imageCellSection = function () {
+    return el('div', 'image-cell-section');
   };
 
-  app.v.layout = function () {
-    app.render(document.body, app.v.header());
-    app.render(document.body, app.v.imageCellSection());
+  app.t.image = function (url, id) {
+    var img = el('img');
+    img.setAttribute('id', id);
+    img.setAttribute('src', url);
+    return img;
   };
 
   app.v.lightbox = function (imageNode, imageTitle, imageCollection) {
     if (!imageCollection) imageCollection = app.images;
-    
+        
+    window.addEventListener('keydown', navigateOnKeyDown);
+
     var shadowbox = el('div', 'shadowbox');
+    shadowbox.addEventListener('click', closeLightbox);
+    
     var lightbox = el('div', 'lightbox');
+    
     var backButton = el('div', 'lightbox-back-button');
     backButton.textContent = '<';
-    backButton.addEventListener('click', function () {
-      for (var i = 0; i < imageCollection.length; i++) {
-        if (imageNode.id === imageCollection[i].id && i > 0) {
-            closeLightbox();
-            var image = imageCollection[i - 1];
-            app.v.lightbox(app.v.image(image.base64Image, image.id), image.title, imageCollection);
-            return;
-        }
-      }
-
-      closeLightbox();
-    });
-
+    backButton.addEventListener('click', regress);
 
     var forwardButton = el('div', 'lightbox-forward-button');
     forwardButton.textContent = '>';
-    forwardButton.addEventListener('click', function () {
-      for (var i = 0; i < imageCollection.length; i++) {
-        if (imageNode.id === imageCollection[i].id && i < imageCollection.length - 1) {
-            closeLightbox();
-            var image = imageCollection[i + 1];
-            app.v.lightbox(app.v.image(image.base64Image, image.id), image.title, imageCollection);
-            return;
-        }
-      }
-
-      closeLightbox();
-    });
-
-
-    shadowbox.addEventListener('click', closeLightbox);
+    forwardButton.addEventListener('click', progress);
 
     var title = el('p');
     title.textContent = imageTitle || 'Lightbox Demo Title';
 
     var close = el('div', 'lightbox-close');
     close.textContent = 'X';
-
     close.addEventListener('click', closeLightbox);
     
     lightbox.appendChild(close);
@@ -207,16 +193,45 @@
       forwardButton.style.left = lightboxLeft + lightboxWidth + margin;
     };
 
+    function navigateOnKeyDown (ev) {
+      var keys = {rightArrow: 39, leftArrow: 37};
+      if (ev.which === keys.rightArrow) {
+        progress();
+      } else if (ev.which === keys.leftArrow) {
+        regress();
+      }
+    };
+    
+    function progress  () {
+      for (var i = 0; i < imageCollection.length; i++) {
+        if (imageNode.id === imageCollection[i].id && i < imageCollection.length - 1) {
+            closeLightbox();
+            var image = imageCollection[i + 1];
+            app.v.lightbox(app.t.image(image.base64Image, image.id), image.title, imageCollection);
+            return;
+        }
+      }
+
+      closeLightbox();
+    };
+
+    function regress () {
+      for (var i = 0; i < imageCollection.length; i++) {
+        if (imageNode.id === imageCollection[i].id && i > 0) {
+            closeLightbox();
+            var image = imageCollection[i - 1];
+            app.v.lightbox(app.t.image(image.base64Image, image.id), image.title, imageCollection);
+            return;
+        }
+      }
+
+      closeLightbox();
+    };
+
     function closeLightbox () {
+      window.removeEventListener('keydown', navigateOnKeyDown);
       remove(lightbox, backButton, forwardButton, shadowbox);
     };
-  };
-
-  app.v.image = function (url, id) {
-    var img = el('img');
-    img.setAttribute('id', id);
-    img.setAttribute('src', url);
-    return img;
   };
 
   window.app = app;
