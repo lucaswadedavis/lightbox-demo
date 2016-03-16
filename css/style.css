@@ -83,6 +83,11 @@ input[type=button] {
   padding-top: 20px;
 }
 
+@keyframes image-cell-fade-in {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
 .image-cell {
   padding: 10px;
   margin: 10px;
@@ -91,6 +96,8 @@ input[type=button] {
   text-align: center;
   display: inline-block;
   border: 5px solid rgba(0,0,0,0);
+  animation-name: image-cell-fade-in;
+  animation-duration: 2s;
 }
 
 .image-cell:hover {
@@ -101,3 +108,4 @@ input[type=button] {
   cursor: pointer;
   width: 150px;
 }
+
