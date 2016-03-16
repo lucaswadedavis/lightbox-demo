@@ -68,8 +68,8 @@
   //
   var app = {images:[], v: {}, t: {}};
 
-  app.getBase64Images = function (n) {
-    var url = 'http://104.131.154.14:3000/want';
+  app.getBase64Images = function (pixelsWide) {
+    var url = 'http://104.131.154.14:3000/' + pixelsWide || 500;
 
     var callback = function (e) {
       var images = e.target.response.base64Images; 
@@ -102,6 +102,8 @@
 
   app.init = function () { 
     app.v.layout();
+    app.getBase64Images();
+    app.getBase64Images();
     app.getBase64Images();
   };
 

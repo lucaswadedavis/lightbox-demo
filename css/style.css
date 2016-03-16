@@ -90,6 +90,11 @@ input[type=button] {
   max-width: 200px;
   text-align: center;
   display: inline-block;
+  border: 5px solid rgba(0,0,0,0);
+}
+
+.image-cell:hover {
+  border: 5px solid #ff0;
 }
 
 .image-cell img {
