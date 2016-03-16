@@ -1,5 +1,10 @@
 (function(){
 
+  var creds = {
+    appID: '1541c5a2-b78d-48d0-9b41-1be7072d7c1b',
+    jsKey: '6b0ef299-e3ce-479e-bc1d-e1b62df2c5ba'
+  };
+
   var uuid = function () {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -8,12 +13,15 @@
   };
 
   var get = function (url, callback) {
-    var oReq = new XMLHttpRequest();
-    var images;
-    oReq.onload = callback; 
-    oReq.open('GET', url, true);
-    oReq.responseType = 'json';
-    oReq.send();    
+    var req = new XMLHttpRequest();
+    req.onload = callback; 
+    req.open('GET', url, true);
+    req.responseType = 'json';
+    req.setRequestHeader(
+      'Authorization',
+      'Basic ' + btoa(creds.appID + ':' + creds.jsKey)
+    );
+    req.send();    
   };
 
   var getWidth = function (node) {
@@ -42,11 +50,6 @@
     });
   };
 
-  var creds = {
-    appID: '1541c5a2-b78d-48d0-9b41-1be7072d7c1b',
-    jsKey: '6b0ef299-e3ce-479e-bc1d-e1b62df2c5ba'
-  };
-
   // convienient aliases
   var el = function (tag) {
     var el = document.createElement(tag || 'div');
@@ -57,6 +60,13 @@
     }
     return el;
   };
+
+  var append = function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      target.appendChild(arguments[i]);
+    }
+  };
+
 
   var remove = function () {
     if (!arguments.length) return;
@@ -69,19 +79,18 @@
   var app = {images:[], v: {}, t: {}};
 
   app.getBase64Images = function (pixelsWide) {
-    var url = 'http://104.131.154.14:3000/' + pixelsWide || 500;
-
+    var url = 'http://104.131.154.14:3000/' + (pixelsWide || 500);
     var callback = function (e) {
       var images = e.target.response.base64Images; 
       for (var i = 0; i < images.length; i++) {
-        app.addBase64Image(images[i]);
+        app.v.addBase64Image(images[i]);
       }
     };
 
     get(url, callback);
   };
 
-  app.addBase64Image = function (base64Image) {
+  app.v.addBase64Image = function (base64Image) {
     var id = uuid();
     var title = fakeTitle();
     app.images.push({base64Image: base64Image, id: id, title: title});
@@ -90,14 +99,10 @@
       app.v.lightbox(app.t.image(base64Image, id), title);
     });
 
-    app.render(
+    append(
       document.getElementsByClassName('image-cell-section')[0],
       app.t.imageCell(image, title)
     );
-  };
-
-  app.render = function (target, node) {
-    target.appendChild(node);
   };
 
   app.init = function () { 
@@ -108,8 +113,8 @@
   };
 
   app.v.layout = function () {
-    app.render(document.body, app.t.header());
-    app.render(document.body, app.t.imageCellSection());
+    append(document.body, app.t.header());
+    append(document.body, app.t.imageCellSection());
   };
 
   app.t.imageCell = function (imageNode, imageTitle) {
@@ -138,11 +143,24 @@
     return el('div', 'image-cell-section');
   };
 
-  app.t.image = function (url, id) {
+  app.t.image = function (src, id) {
     var img = el('img');
     img.setAttribute('id', id);
-    img.setAttribute('src', url);
+    img.setAttribute('src', src);
     return img;
+  };
+
+  app.t.lightboxElement = function(className, textContent, callback) {
+    var button = el('div', className);
+    button.textContent = textContent;
+    button.addEventListener('click', callback);
+    return button;
+  };
+
+  app.t.lightboxTitle = function (imageTitle) {
+    var title = el('p');
+    title.textContent = imageTitle || 'Lightbox Demo Title';
+    return title;
   };
 
   app.v.lightbox = function (imageNode, imageTitle, imageCollection) {
@@ -150,42 +168,24 @@
         
     window.addEventListener('keydown', navigateOnKeyDown);
 
-    var shadowbox = el('div', 'shadowbox');
-    shadowbox.addEventListener('click', closeLightbox);
-    
+    var shadowbox = app.t.lightboxElement('shadowbox', '', closeLightbox); 
     var lightbox = el('div', 'lightbox');
     
-    var backButton = el('div', 'lightbox-back-button');
-    backButton.textContent = '<';
-    backButton.addEventListener('click', regress);
-
-    var forwardButton = el('div', 'lightbox-forward-button');
-    forwardButton.textContent = '>';
-    forwardButton.addEventListener('click', progress);
-
-    var title = el('p');
-    title.textContent = imageTitle || 'Lightbox Demo Title';
-
-    var close = el('div', 'lightbox-close');
-    close.textContent = 'X';
-    close.addEventListener('click', closeLightbox);
-    
-    lightbox.appendChild(close);
-    lightbox.appendChild(imageNode);
-    lightbox.appendChild(title);
-
-    app.render(document.body, shadowbox);
-    app.render(document.body, backButton);
-    app.render(document.body, forwardButton);
-    app.render(document.body, lightbox);
+    var backButton = app.t.lightboxElement('lightbox-back-button', '<', regress);
+    var forwardButton = app.t.lightboxElement('lightbox-forward-button', '>', progress);
+    var title = app.t.lightboxTitle(imageTitle);
+    var close = app.t.lightboxElement('lightbox-close', 'X', closeLightbox);
+   
+    append(lightbox, close, imageNode, title);
+    append(document.body, shadowbox, backButton, forwardButton, lightbox);
   
     position();
     window.onresize = position;
 
     function position () {
-      var lightboxWidth = parseInt(window.getComputedStyle(lightbox).width, 10);
-      var windowWidth = parseInt(window.getComputedStyle(document.body).width, 10);
-      var backButtonWidth = parseInt(window.getComputedStyle(backButton).width, 10);
+      var lightboxWidth = getWidth(lightbox);
+      var windowWidth = getWidth(document.body);
+      var backButtonWidth = getWidth(backButton);
       var forwardButtonWidth = getWidth(forwardButton);
       var margin = 20;
 
