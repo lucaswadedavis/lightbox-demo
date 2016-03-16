@@ -23,11 +23,13 @@ body {
   width: 100px;
   float: right;
   text-align: center;
+  font-weight: bold;
   color: red;
 }
 
 .image-cell-section {
   margin-top: 100px;
+  text-align: center;
 }
 
 .lightbox, .lightbox-back-button, .lightbox-forward-button {
@@ -86,11 +88,11 @@ input[type=button] {
   margin: 10px;
   background: #fff;
   max-width: 200px;
-  float: left;
   text-align: center;
+  display: inline-block;
 }
 
 .image-cell img {
   cursor: pointer;
-  width: 100px;
+  width: 150px;
 }
