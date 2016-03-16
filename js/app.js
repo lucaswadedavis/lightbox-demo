@@ -5,116 +5,44 @@
     jsKey: '6b0ef299-e3ce-479e-bc1d-e1b62df2c5ba'
   };
 
-  var uuid = function () {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-      return v.toString(16);
-    }); 
-  };
-
-  var get = function (url, callback) {
-    var req = new XMLHttpRequest();
-    req.onload = callback; 
-    req.open('GET', url, true);
-    req.responseType = 'json';
-    req.setRequestHeader(
-      'Authorization',
-      'Basic ' + btoa(creds.appID + ':' + creds.jsKey)
-    );
-    req.send();    
-  };
-
-  var getWidth = function (node) {
-    return parseInt(window.getComputedStyle(node).width, 10);
-  };
-
-  var sample = function (arrayOrString) {
-    return arrayOrString[Math.floor(Math.random() * arrayOrString.length)];
-  };
-
-  var fakeTitle = function () {
-    var consonants = 'bcdfghjklmnpqrstvwxyz';
-    var vowels = 'aeiou';
-    var patterns = 'CVC VC CV CVVCV CVCV VCVVC CVCCVC';
-    
-    var n = 1 + Math.floor(Math.random() * 3);
-    var words = [];
-    for (var i = 0; i < n; i++) {
-      words.push(sample(patterns.split(' ')));
-    }
-
-    return words.join(' ').replace(/[CV]/g, function(x) {
-      var c = sample(consonants);
-      var v = sample(vowels);
-      return x === 'C' ? c : v;
-    });
-  };
-
-  // convienient aliases
-  var el = function (tag) {
-    var el = document.createElement(tag || 'div');
-    if (arguments.length > 1) {
-      for (var i = 1; i < arguments.length; i++) {
-        el.classList.add(arguments[i]);
-      }
-    }
-    return el;
-  };
-
-  var append = function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      target.appendChild(arguments[i]);
-    }
-  };
-
-
-  var remove = function () {
-    if (!arguments.length) return;
-    for (var i = 0; i < arguments.length; i++) {
-      var node = arguments[i];
-      node.parentNode.removeChild(node);
-    }
-  };
-  //
   var app = {images:[], v: {}, t: {}};
 
-  app.getBase64Images = function (pixelsWide) {
+  app.getImages = function (pixelsWide) {
     var url = 'http://104.131.154.14:3000/' + (pixelsWide || 500);
+    
     var callback = function (e) {
-      var images = e.target.response.base64Images; 
+      var images = e.target.response.images; 
       for (var i = 0; i < images.length; i++) {
-        app.v.addBase64Image(images[i]);
+        var image = new Image(images[i]);
+        app.images.push(image);
+        app.v.addImage(image);
       }
     };
 
     get(url, callback);
   };
 
-  app.v.addBase64Image = function (base64Image) {
-    var id = uuid();
-    var title = fakeTitle();
-    app.images.push({base64Image: base64Image, id: id, title: title});
-    var image = app.t.image(base64Image);
-    image.addEventListener('click', function (el) {
-      app.v.lightbox(app.t.image(base64Image, id), title);
+  app.v.addImage = function (image) {
+    var imageNode = app.t.image(image.src);
+    imageNode.addEventListener('click', function () {
+      app.v.lightbox(app.t.image(image.src, image.id), image.title);
     });
 
     append(
       document.getElementsByClassName('image-cell-section')[0],
-      app.t.imageCell(image, title)
+      app.t.imageCell(imageNode, image.title)
     );
   };
 
   app.init = function () { 
     app.v.layout();
-    app.getBase64Images();
-    app.getBase64Images();
-    app.getBase64Images();
+    app.getImages();
+    app.getImages();
+    app.getImages();
   };
 
   app.v.layout = function () {
-    append(document.body, app.t.header());
-    append(document.body, app.t.imageCellSection());
+    append(document.body, app.t.header(), app.t.imageCellSection());
   };
 
   app.t.imageCell = function (imageNode, imageTitle) {
@@ -127,16 +55,18 @@
     return cell;
   };
 
+  app.t.getImageButton = function () {
+    var button = el('span', 'header-plus');
+    button.textContent = '+';
+    button.addEventListener('click', app.getImages);
+    return button;
+  };
+
   app.t.header = function () {
-    var h = el('div', 'header');
-    h.textContent = 'Lightbox Demo';
-    var plus = el('span', 'header-plus');
-    plus.textContent = '+';
-    plus.addEventListener('click', function () {
-      app.getBase64Images();
-    });
-    h.appendChild(plus);
-    return h;
+    var header = el('div', 'header');
+    header.textContent = 'Lightbox Demo';
+    header.appendChild(app.t.getImageButton());
+    return header;
   };
 
   app.t.imageCellSection = function () {
@@ -209,7 +139,11 @@
         if (imageNode.id === imageCollection[i].id && i < imageCollection.length - 1) {
             closeLightbox();
             var image = imageCollection[i + 1];
-            app.v.lightbox(app.t.image(image.base64Image, image.id), image.title, imageCollection);
+            app.v.lightbox(
+                app.t.image(image.src, image.id),
+                image.title,
+                imageCollection
+            );
             return;
         }
       }
@@ -222,7 +156,7 @@
         if (imageNode.id === imageCollection[i].id && i > 0) {
             closeLightbox();
             var image = imageCollection[i - 1];
-            app.v.lightbox(app.t.image(image.base64Image, image.id), image.title, imageCollection);
+            app.v.lightbox(app.t.image(image.src, image.id), image.title, imageCollection);
             return;
         }
       }
@@ -236,6 +170,84 @@
     };
   };
 
+  // utility functions
+
+  function uuid () {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    }); 
+  };
+
+  function get (url, callback) {
+    var req = new XMLHttpRequest();
+    req.onload = callback; 
+    req.open('GET', url, true);
+    req.responseType = 'json';
+    req.setRequestHeader(
+      'Authorization',
+      'Basic ' + btoa(creds.appID + ':' + creds.jsKey)
+    );
+    req.send();    
+  };
+
+  function getWidth (node) {
+    return parseInt(window.getComputedStyle(node).width, 10);
+  };
+
+  function sample (arrayOrString) {
+    return arrayOrString[Math.floor(Math.random() * arrayOrString.length)];
+  };
+
+  function fakeTitle () {
+    var consonants = 'bcdfghjklmnpqrstvwxyz';
+    var vowels = 'aeiou';
+    var patterns = 'CVC VC CV CVVCV CVCV VCVVC CVCCVC';
+    
+    var n = 1 + Math.floor(Math.random() * 3);
+    var words = [];
+    for (var i = 0; i < n; i++) {
+      words.push(sample(patterns.split(' ')));
+    }
+
+    return words.join(' ').replace(/[CV]/g, function(x) {
+      var c = sample(consonants);
+      var v = sample(vowels);
+      return x === 'C' ? c : v;
+    });
+  };
+
+  function Image (src) {
+    this.src = src;
+    this.id = uuid();
+    this.title = fakeTitle();
+  };
+
+   function el (tag) {
+    var el = document.createElement(tag || 'div');
+    if (arguments.length > 1) {
+      for (var i = 1; i < arguments.length; i++) {
+        el.classList.add(arguments[i]);
+      }
+    }
+    return el;
+  };
+
+  function append (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      target.appendChild(arguments[i]);
+    }
+  };
+
+  function remove () {
+    if (!arguments.length) return;
+    for (var i = 0; i < arguments.length; i++) {
+      var node = arguments[i];
+      node.parentNode.removeChild(node);
+    }
+  };
+
+  
   window.app = app;
 
 })()
