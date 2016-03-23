@@ -42,6 +42,15 @@ body {
   to {opacity: 1;}
 }
 
+@keyframes notification-animation {
+  0% {opacity: 0;}
+  5% {opacity: 0;}
+  25% {opacity: 1;}
+  75% {opacity: 1;}
+  95% {opacity: 0;}
+  100% {opacity: 0;}
+}
+
 .image-cell {
   padding: 10px;
   margin: 10px;
@@ -103,3 +112,16 @@ body {
   height: 100%;
 }
 
+.xhr-failure-notification {
+  opacity: 0;
+  background: #f00;
+  color: #fff;
+  position: fixed;
+  z-index: 999;
+  width: 100%;
+  top: 20%;
+  padding: 20px;
+  text-align: center;
+  animation-name: notification-animation;
+  animation-duration: 6s;
+}

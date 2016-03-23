@@ -88,9 +88,25 @@
     return title;
   };
 
+  // takes a string and returns a failure notification div DOM node
+  app.t.failureNotification = function (message, notificationClass) {
+    var notification = el('div', notificationClass || 'xhr-failure-notification');
+    notification.textContent = message || 'it seems like there\'s a problem';
+    return notification;
+  };
+
   // adds the header and image cell section to document.body - you can read
   app.v.layout = function () {
     append(document.body, app.t.header(), app.t.imageCellSection());
+  };
+
+  // notifies user on XHR request failure
+  app.v.xhrFailureNotification = function (message) {
+    var notification = app.t.failureNotification(message);
+    append(document.body, notification);
+    setTimeout(function () {
+      remove(notification);
+    }, 6000);
   };
 
   // adds images 'cells' to the 'images section'
@@ -188,9 +204,10 @@
   // utility functions
 
   // xhr GET with authorization set to our credentials
-  function get (url, callback) {
+  function get (url, success, error) {
     var req = new XMLHttpRequest();
-    req.onload = callback; 
+    req.addEventListener('load', success);
+    req.addEventListener('error', error);
     req.open('GET', url, true);
     req.responseType = 'json';
     req.setRequestHeader(
@@ -206,7 +223,7 @@
   function getImages (pixelsWide) {
     var url = 'http://104.131.154.14:3000/' + (pixelsWide || 500);
     
-    var callback = function (e) {
+    var success = function (e) {
       var images = e.target.response.images; 
       for (var i = 0; i < images.length; i++) {
         var image = new Image(images[i]);
@@ -215,7 +232,11 @@
       }
     };
 
-    get(url, callback);
+    var error = function (e) {
+      app.v.xhrFailureNotification('something went wrong');
+    };
+
+    get(url, success, error);
   };
 
   // like underscore's sample, takes an array or string
